@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">SEW-7a-Calculator</string>
+    <string name="toolbar_title">Calculator</string>
+    <string name="first_value_placeholder">Value 1</string>
+    <string name="second_value_placeholder">Value 2</string>
+    <string name="addition_symbol">+</string>
+    <string name="substraction_symbol">-</string>
+    <string name="multiplication_symbol">*</string>
+    <string name="division_symbol">/</string>
+</resources>
