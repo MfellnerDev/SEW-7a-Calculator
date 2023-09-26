@@ -2,6 +2,8 @@ package com.example.mfellner.sew_7a_calculator;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -10,6 +12,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
     private char calcOperation;
@@ -43,6 +46,10 @@ public class MainActivity extends AppCompatActivity {
                 double firstValue = extractInputAndConvertToDouble(inputFirstValue);
                 double secondValue = extractInputAndConvertToDouble(inputSecondValue);
 
+                //save the values
+                storeInputIntoSharedPreferences(firstValue, secondValue);
+
+                //calculate the result
                 double result = performOperation(firstValue, secondValue);
 
                 // make result visible
@@ -88,6 +95,22 @@ public class MainActivity extends AppCompatActivity {
 
     public void setCalcOperation(char calcOperation) {
         this.calcOperation = calcOperation;
+    }
+
+    private void storeInputIntoSharedPreferences(double firstValue, double secondValue)  {
+        SharedPreferences sharedPreferences = getSharedPreferences("sharedPref", Context.MODE_PRIVATE);
+
+
+        SharedPreferences.Editor edit = sharedPreferences.edit();
+        // put our input in the editor
+        edit.putString("firstValue", String.valueOf(firstValue));
+        edit.putString("secondValue", String.valueOf(secondValue));
+        //apply the changes -> they'll get saved
+        edit.apply();
+
+        //show toast to user
+        Toast toast = Toast.makeText(this, "Saved", Toast.LENGTH_SHORT);
+        toast.show();
     }
 
     @Override
