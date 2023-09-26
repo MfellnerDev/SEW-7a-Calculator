@@ -18,6 +18,9 @@ public class MainActivity extends AppCompatActivity {
     private char calcOperation;
     private Button calculateButton;
 
+    EditText inputFirstValue;
+    EditText inputSecondValue;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,18 +39,13 @@ public class MainActivity extends AppCompatActivity {
         setupButtonClickListener(divButton, '/');
 
         this.calculateButton = (Button) findViewById(R.id.button_calculate);
+        this.inputFirstValue = (EditText) findViewById(R.id.edit_text_first);
+        this.inputSecondValue = (EditText) findViewById(R.id.edit_text_second);
         calculateButton.setOnClickListener(new View.OnClickListener()  {
             public void onClick (View v)    {
 
-                // get all values
-                EditText inputFirstValue = (EditText) findViewById(R.id.edit_text_first);
-                EditText inputSecondValue = (EditText) findViewById(R.id.edit_text_second);
-
                 double firstValue = extractInputAndConvertToDouble(inputFirstValue);
                 double secondValue = extractInputAndConvertToDouble(inputSecondValue);
-
-                //save the values
-                storeInputIntoSharedPreferences(firstValue, secondValue);
 
                 //calculate the result
                 double result = performOperation(firstValue, secondValue);
@@ -56,6 +54,30 @@ public class MainActivity extends AppCompatActivity {
 
                 TextView resultView = (TextView) findViewById(R.id.text_result);
                 resultView.setText(String.valueOf(result));
+            }
+        });
+
+        Button msButton = (Button) findViewById(R.id.button_ms);
+        msButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                EditText inputFirstValue = (EditText) findViewById(R.id.edit_text_first);
+                EditText inputSecondValue = (EditText) findViewById(R.id.edit_text_second);
+                double firstValue = extractInputAndConvertToDouble(inputFirstValue);
+                double secondValue = extractInputAndConvertToDouble(inputSecondValue);
+
+                //save the values
+                storeInputIntoSharedPreferences(firstValue, secondValue);
+            }
+        });
+
+        Button mrButton = (Button) findViewById(R.id.button_mr);
+        mrButton.setOnClickListener(new View.OnClickListener()  {
+            @Override
+            public void onClick(View view)  {
+                double[] retrievedValues = retrieveStoredValuesFromSharedPreferences();
+                inputFirstValue.setText(String.valueOf(retrievedValues[0]));
+                inputSecondValue.setText(String.valueOf(retrievedValues[1]));
             }
         });
     }
@@ -111,6 +133,26 @@ public class MainActivity extends AppCompatActivity {
         //show toast to user
         Toast toast = Toast.makeText(this, "Saved", Toast.LENGTH_SHORT);
         toast.show();
+    }
+
+    private double[] retrieveStoredValuesFromSharedPreferences()    {
+        SharedPreferences sharedPreferences = getSharedPreferences("sharedPref", Context.MODE_PRIVATE);
+        double[] values = new double[2];
+        String firstValueString = sharedPreferences.getString("firstValue", "");
+        String secondValueString = sharedPreferences.getString("secondValue", "");
+        if (firstValueString.isEmpty() || secondValueString.isEmpty())  {
+            // show warning-toast
+            Toast toast = Toast.makeText(this, "There are no values saved!", Toast.LENGTH_LONG);
+            toast.show();
+            values[0] = 0;
+            values[1] = 0;
+        }   else {
+            Toast toast = Toast.makeText(this, "Loaded values.", Toast.LENGTH_SHORT);
+            toast.show();
+            values[0] = Double.parseDouble(firstValueString);
+            values[1] = Double.parseDouble(secondValueString);
+        }
+        return values;
     }
 
     @Override
