@@ -10,4 +10,5 @@
     <string name="text_calculate">Calculate</string>
     <string name="text_ms">MS</string>
     <string name="text_mr">MR</string>
+    <string name="text_result_default">0</string>
 </resources>
