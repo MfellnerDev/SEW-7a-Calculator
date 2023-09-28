@@ -16,14 +16,17 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class MainActivity extends AppCompatActivity {
     private char calcOperation;
     private Button calculateButton;
 
-    EditText inputFirstValue;
-    EditText inputSecondValue;
+    private EditText inputFirstValue;
+    private EditText inputSecondValue;
 
-    TextView resultView;
+    private TextView resultView;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -31,31 +34,23 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //get all radiobuttons
-        Button addButton = findViewById(R.id.radio_addition);
-        Button subButton = findViewById(R.id.radio_subtraction);
-        Button multButton = findViewById(R.id.radio_multiplication);
-        Button divButton = findViewById(R.id.radio_division);
+        //make the radio buttons ready for use
+        setupRadioButtons();
 
-        //add an eventlistener to all buttons
-        setupButtonClickListener(addButton, '+');
-        setupButtonClickListener(subButton, '-');
-        setupButtonClickListener(multButton, '*');
-        setupButtonClickListener(divButton, '/');
-
-        resultView = findViewById(R.id.text_result);
-
+        this.resultView = findViewById(R.id.text_result);
         this.calculateButton = findViewById(R.id.button_calculate);
         this.inputFirstValue = findViewById(R.id.edit_text_first);
         this.inputSecondValue = findViewById(R.id.edit_text_second);
+
+        // event listener for the calculate button - execute the main event
         calculateButton.setOnClickListener(new View.OnClickListener()  {
             public void onClick (View v)    {
-
-                double firstValue = extractInputAndConvertToDouble(inputFirstValue);
-                double secondValue = extractInputAndConvertToDouble(inputSecondValue);
+                // get and extract the numeric value out of the field
+                double firstValue = parseStringToDouble(inputFirstValue.getText().toString());
+                double secondValue = parseStringToDouble(inputSecondValue.getText().toString());
 
                 //calculate the result
-                double result = performOperation(firstValue, secondValue);
+                double result = performCalculation(firstValue, secondValue);
 
                 // make result visible
                 resultView.setText(String.valueOf(result));
@@ -73,11 +68,11 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 EditText inputFirstValue = findViewById(R.id.edit_text_first);
                 EditText inputSecondValue = findViewById(R.id.edit_text_second);
-                double firstValue = extractInputAndConvertToDouble(inputFirstValue);
-                double secondValue = extractInputAndConvertToDouble(inputSecondValue);
+                double firstValue = parseStringToDouble(inputFirstValue.getText().toString());
+                double secondValue = parseStringToDouble(inputSecondValue.getText().toString());
 
                 //save the values
-                storeInputIntoSharedPreferences(firstValue, secondValue);
+                saveInputToSharedPreferences(firstValue, secondValue);
             }
         });
 
@@ -85,9 +80,10 @@ public class MainActivity extends AppCompatActivity {
         mrButton.setOnClickListener(new View.OnClickListener()  {
             @Override
             public void onClick(View view)  {
-                double[] retrievedValues = retrieveStoredValuesFromSharedPreferences();
-                inputFirstValue.setText(String.valueOf(retrievedValues[0]));
-                inputSecondValue.setText(String.valueOf(retrievedValues[1]));
+                // retrieve the stored values and update the EditText view components
+                Map<String, Double> retrievedValues = retrieveStoredValuesFromSharedPreferences();
+                inputFirstValue.setText(String.valueOf(retrievedValues.get("firstValue")));
+                inputSecondValue.setText(String.valueOf(retrievedValues.get("secondValue")));
             }
         });
 
@@ -96,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
                     resultView.setText("0");
+                    resultView.setTextColor(Color.BLACK);
                     return true;
                 }
                 return false;
@@ -103,25 +100,59 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private double extractInputAndConvertToDouble(EditText editText)  {
+    private void setupRadioButtons()    {
+        //get all radiobuttons
+        Button addButton = findViewById(R.id.radio_addition);
+        Button subButton = findViewById(R.id.radio_subtraction);
+        Button multButton = findViewById(R.id.radio_multiplication);
+        Button divButton = findViewById(R.id.radio_division);
+
+        //add an eventlistener to all buttons
+        setupRadioButtonClickListener(addButton, '+');
+        setupRadioButtonClickListener(subButton, '-');
+        setupRadioButtonClickListener(multButton, '*');
+        setupRadioButtonClickListener(divButton, '/');
+    }
+
+    /**
+     * Parse a given String into a double variable
+     * @param textToParse the text that should get parsed
+     * @return a double containing the text
+     */
+    private double parseStringToDouble(String textToParse)  {
         try {
-            return Double.parseDouble(editText.getText().toString());
-        }   catch (Exception ex)    {
-            System.err.println("Error!" + ex.getMessage());
+            return Double.parseDouble(textToParse);
+        }   catch (NumberFormatException numFoEx)    {
+            System.err.println("Error! " + numFoEx.getMessage());
             return 0;
         }
     }
 
-    private void setupButtonClickListener(Button button, char calcOperation) {
-        button.setOnClickListener(new View.OnClickListener() {
+    /**
+     * Sets the clicklistener for our radio button - also decides, which operation (char)
+     * is selected by the user
+     * @param radioButton radio button
+     * @param selectedCalcOperation the operation that should be set
+     */
+    private void setupRadioButtonClickListener(Button radioButton, char selectedCalcOperation) {
+        radioButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                setCalcOperation(calcOperation);
+                calcOperation = selectedCalcOperation;
+                Log.i("HAIII", String.valueOf(calcOperation));
             }
         });
     }
 
-    private double performOperation(double firstValue, double secondValue)    {
+
+
+    /**
+     * Takes the values and the calc operation and performs the calculation
+     * @param firstValue first double value
+     * @param secondValue second double value
+     * @return the result or 0
+     */
+    private double performCalculation(double firstValue, double secondValue)    {
         switch (this.calcOperation) {
             case '+':
                 return firstValue + secondValue;
@@ -136,13 +167,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void setCalcOperation(char calcOperation) {
-        this.calcOperation = calcOperation;
-    }
-
-    private void storeInputIntoSharedPreferences(double firstValue, double secondValue)  {
+    /**
+     * Saves the user input to the (private) shared preferences
+     * @param firstValue first double value
+     * @param secondValue second double value
+     */
+    private void saveInputToSharedPreferences(double firstValue, double secondValue)  {
         SharedPreferences sharedPreferences = getSharedPreferences("sharedPref", Context.MODE_PRIVATE);
-
 
         SharedPreferences.Editor edit = sharedPreferences.edit();
         // put our input in the editor
@@ -152,30 +183,44 @@ public class MainActivity extends AppCompatActivity {
         edit.apply();
 
         //show toast to user
-        Toast toast = Toast.makeText(this, "Saved", Toast.LENGTH_SHORT);
+        this.showShortToast("Saved");
+    }
+
+    /**
+     * Retrieves stored values from (private) shared preferences and stores them into a map
+     * @return a map containing the retrieved first and second value
+     */
+    private Map<String, Double> retrieveStoredValuesFromSharedPreferences()    {
+        SharedPreferences sharedPreferences = getSharedPreferences("sharedPref", Context.MODE_PRIVATE);
+
+        // get values out of shared preferences
+        String firstValueString = sharedPreferences.getString("firstValue", "");
+        String secondValueString = sharedPreferences.getString("secondValue", "");
+
+        Map<String, Double> retrievedValues = new HashMap<>();
+
+        // check if there are values stored
+        if (firstValueString.isEmpty() || secondValueString.isEmpty())  {
+            // show warning-toast
+            this.showShortToast("There are no values saved!");
+            retrievedValues.put("firstValue", 0.0);
+            retrievedValues.put("secondValue", 0.0);
+        }   else {
+            retrievedValues.put("firstValue", parseStringToDouble(firstValueString));
+            retrievedValues.put("secondValue", parseStringToDouble(secondValueString));
+            this.showShortToast("Loaded values.");
+        }
+        return retrievedValues;
+    }
+
+    private void showShortToast(String message) {
+        Toast toast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
         toast.show();
     }
 
-    private double[] retrieveStoredValuesFromSharedPreferences()    {
-        SharedPreferences sharedPreferences = getSharedPreferences("sharedPref", Context.MODE_PRIVATE);
-        double[] values = new double[2];
-        String firstValueString = sharedPreferences.getString("firstValue", "");
-        String secondValueString = sharedPreferences.getString("secondValue", "");
-        if (firstValueString.isEmpty() || secondValueString.isEmpty())  {
-            // show warning-toast
-            Toast toast = Toast.makeText(this, "There are no values saved!", Toast.LENGTH_LONG);
-            toast.show();
-            values[0] = 0;
-            values[1] = 0;
-        }   else {
-            Toast toast = Toast.makeText(this, "Loaded values.", Toast.LENGTH_SHORT);
-            toast.show();
-            values[0] = Double.parseDouble(firstValueString);
-            values[1] = Double.parseDouble(secondValueString);
-        }
-        return values;
-    }
-
+    /**
+     * If the app is in focus -> set the calculate button color to green
+     */
     @Override
     public void onResume() {
         super.onResume();
