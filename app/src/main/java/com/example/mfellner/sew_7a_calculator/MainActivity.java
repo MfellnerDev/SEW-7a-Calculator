@@ -2,11 +2,13 @@ package com.example.mfellner.sew_7a_calculator;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -21,16 +23,19 @@ public class MainActivity extends AppCompatActivity {
     EditText inputFirstValue;
     EditText inputSecondValue;
 
+    TextView resultView;
+
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         //get all radiobuttons
-        Button addButton = (Button) findViewById(R.id.radio_addition);
-        Button subButton = (Button) findViewById(R.id.radio_subtraction);
-        Button multButton = (Button) findViewById(R.id.radio_multiplication);
-        Button divButton = (Button) findViewById(R.id.radio_division);
+        Button addButton = findViewById(R.id.radio_addition);
+        Button subButton = findViewById(R.id.radio_subtraction);
+        Button multButton = findViewById(R.id.radio_multiplication);
+        Button divButton = findViewById(R.id.radio_division);
 
         //add an eventlistener to all buttons
         setupButtonClickListener(addButton, '+');
@@ -38,9 +43,11 @@ public class MainActivity extends AppCompatActivity {
         setupButtonClickListener(multButton, '*');
         setupButtonClickListener(divButton, '/');
 
-        this.calculateButton = (Button) findViewById(R.id.button_calculate);
-        this.inputFirstValue = (EditText) findViewById(R.id.edit_text_first);
-        this.inputSecondValue = (EditText) findViewById(R.id.edit_text_second);
+        resultView = findViewById(R.id.text_result);
+
+        this.calculateButton = findViewById(R.id.button_calculate);
+        this.inputFirstValue = findViewById(R.id.edit_text_first);
+        this.inputSecondValue = findViewById(R.id.edit_text_second);
         calculateButton.setOnClickListener(new View.OnClickListener()  {
             public void onClick (View v)    {
 
@@ -51,18 +58,21 @@ public class MainActivity extends AppCompatActivity {
                 double result = performOperation(firstValue, secondValue);
 
                 // make result visible
-
-                TextView resultView = (TextView) findViewById(R.id.text_result);
                 resultView.setText(String.valueOf(result));
+                if (result < 0) {
+                    resultView.setTextColor(Color.RED);
+                } else {
+                    resultView.setTextColor(Color.BLACK);
+                }
             }
         });
 
-        Button msButton = (Button) findViewById(R.id.button_ms);
+        Button msButton = findViewById(R.id.button_ms);
         msButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                EditText inputFirstValue = (EditText) findViewById(R.id.edit_text_first);
-                EditText inputSecondValue = (EditText) findViewById(R.id.edit_text_second);
+                EditText inputFirstValue = findViewById(R.id.edit_text_first);
+                EditText inputSecondValue = findViewById(R.id.edit_text_second);
                 double firstValue = extractInputAndConvertToDouble(inputFirstValue);
                 double secondValue = extractInputAndConvertToDouble(inputSecondValue);
 
@@ -71,13 +81,24 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Button mrButton = (Button) findViewById(R.id.button_mr);
+        Button mrButton = findViewById(R.id.button_mr);
         mrButton.setOnClickListener(new View.OnClickListener()  {
             @Override
             public void onClick(View view)  {
                 double[] retrievedValues = retrieveStoredValuesFromSharedPreferences();
                 inputFirstValue.setText(String.valueOf(retrievedValues[0]));
                 inputSecondValue.setText(String.valueOf(retrievedValues[1]));
+            }
+        });
+
+        resultView.setOnTouchListener(new View.OnTouchListener()  {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    resultView.setText("0");
+                    return true;
+                }
+                return false;
             }
         });
     }
